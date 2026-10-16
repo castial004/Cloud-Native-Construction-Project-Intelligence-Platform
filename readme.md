@@ -13,19 +13,31 @@ datasets) and the **working implementation** (`platform/`).
 
 ## 🚀 Quick start
 
+**Linux / macOS / Git Bash:**
 ```bash
 cd platform
 ./run.sh
 ```
+
+**Windows (PowerShell):**
+```powershell
+cd platform
+.\run.ps1
+```
+> If PowerShell blocks the script:
+> `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`
 
 That single command builds the image, starts the database + API + web UI, runs
 the full data pipeline, and prints the dashboard URL:
 
 ### → http://localhost:8080
 
-Stop everything with `./run.sh down`. Requirements: **Docker + Docker Compose** only.
+Stop everything with `./run.sh down` (Linux/macOS) or `.\run.ps1 down`
+(Windows). Requirements: **Docker + Docker Compose** only.
 
-See **[platform/RUN_GUIDE.md](platform/RUN_GUIDE.md)** for the complete step-by-step guide.
+Complete guides:
+- **[platform/RUN_GUIDE.md](platform/RUN_GUIDE.md)** — step-by-step (all platforms)
+- **[platform/WINDOWS.md](platform/WINDOWS.md)** — Windows / Docker Desktop walkthrough
 
 ---
 

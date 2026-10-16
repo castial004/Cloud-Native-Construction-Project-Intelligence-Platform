@@ -31,9 +31,18 @@ cd "/media/bruce-wayne/HASNAIN/VIT WORK/VA/Project/Cloud-Native-Construction-Pro
 
 ## 2. Start everything (ONE command)
 
+**Linux / macOS / Git Bash:**
 ```bash
 ./run.sh
 ```
+
+**Windows (PowerShell):**
+```powershell
+.\run.ps1
+```
+> If PowerShell blocks the script:
+> `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`
+> Full Windows guide: **[WINDOWS.md](WINDOWS.md)**.
 
 **What happens:**
 1. Builds the Docker image (first run: ~3–5 min; later runs: seconds).
@@ -192,8 +201,18 @@ make web               # http://localhost:8080
 
 ## Cheat sheet
 
+**Linux / macOS / Git Bash:**
 ```bash
 ./run.sh              # start  →  http://localhost:8080
 ./run.sh logs         # watch logs
 ./run.sh down         # stop + clean
 ```
+
+**Windows (PowerShell):**
+```powershell
+.\run.ps1             # start  →  http://localhost:8080
+.\run.ps1 logs        # watch logs
+.\run.ps1 down        # stop + clean
+```
+
+See **[WINDOWS.md](WINDOWS.md)** for the full Windows walkthrough.

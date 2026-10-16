@@ -7,9 +7,16 @@ support — packaged with Docker and orchestrated on Kubernetes.
 
 ## 🚀 Quick start (one command)
 
+**Linux / macOS / Git Bash:**
 ```bash
 ./run.sh
 ```
+
+**Windows (PowerShell):**
+```powershell
+.\run.ps1
+```
+See **[WINDOWS.md](WINDOWS.md)** for the full Windows guide.
 
 That builds the image, starts the database + API + web UI, runs the full data
 pipeline (generate → ingest → EVM → train → score → verify), and prints the URL:
@@ -83,6 +90,10 @@ rescheduled in ~1s) and an HPA (2–6 replicas).
 
 ## Manual verification
 See [VERIFY.md](VERIFY.md) for a step-by-step checklist.
+
+## Windows
+See **[WINDOWS.md](WINDOWS.md)** — complete step-by-step guide for Windows
+(Docker Desktop setup, PowerShell commands, troubleshooting).
 
 ## Repository layout
 ```
