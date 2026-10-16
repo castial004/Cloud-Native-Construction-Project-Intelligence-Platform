@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Activities{% endblock %}
+{% block content %}
+<h2>Activity Explorer <span class="muted">({{ total }} rows)</span></h2>
+<form class="filters" method="get">
+  <div><label>Project</label>
+    <select name="project">
+      <option value="">All</option>
+      {% for p in projects %}<option value="{{p}}" {{ 'selected' if p==selected.project }}>{{p}}</option>{% endfor %}
+    </select>
+  </div>
+  <div><label>Risk</label>
+    <select name="risk">
+      <option value="">All</option>
+      {% for r in ['High','Medium','Low'] %}<option value="{{r}}" {{ 'selected' if r==selected.risk }}>{{r}}</option>{% endfor %}
+    </select>
+  </div>
+  <div><label>Trade</label>
+    <select name="trade">
+      <option value="">All</option>
+      {% for t in trades %}<option value="{{t}}" {{ 'selected' if t==selected.trade }}>{{t}}</option>{% endfor %}
+    </select>
+  </div>
+  <div><label>Critical only</label>
+    <select name="critical">
+      <option value="">No</option>
+      <option value="1" {{ 'selected' if selected.critical=='1' }}>Yes</option>
+    </select>
+  </div>
+  <button type="submit">Filter</button>
+  <a href="/activities"><button type="button" class="ghost">Reset</button></a>
+</form>
+<div class="card">
+  <table>
+    <thead><tr><th>Project</th><th>Activity</th><th>Trade</th><th>CPI</th><th>SPI</th><th>Delay Prob</th><th>Risk</th></tr></thead>
+    <tbody>
+      {% for a in rows %}
+      <tr>
+        <td>{{ a.project_id }}</td>
+        <td>{{ a.activity_id }}<br><span class="muted">{{ a.activity_name }}</span></td>
+        <td>{{ a.trade_category }}</td>
+        <td class="{{ 'good' if a.cpi and a.cpi>=1 else 'bad' }}">{{ '%.3f'|format(a.cpi) if a.cpi else '—' }}</td>
+        <td class="{{ 'good' if a.spi and a.spi>=1 else 'warn' }}">{{ '%.3f'|format(a.spi) if a.spi else '—' }}</td>
+        <td>{{ '%.3f'|format(a.delay_probability) if a.delay_probability is not none else '—' }}</td>
+        <td><span class="badge {{ a.risk_category }}">{{ a.risk_category }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

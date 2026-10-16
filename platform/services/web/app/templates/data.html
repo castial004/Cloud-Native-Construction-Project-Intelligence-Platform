@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Data & Actions{% endblock %}
+{% block content %}
+<h2>Data &amp; Actions</h2>
+<div class="card">
+  <h2>Current data store</h2>
+  <span class="muted">Projects {{ counts.projects }} · Activities {{ counts.activities }} · Progress {{ counts.progress }} · Costs {{ counts.costs }} · KPI rows {{ counts.kpis }} · Risk rows {{ counts.risks }}</span>
+</div>
+
+<div class="grid cards" style="margin-top:16px">
+  <div class="card">
+    <h2>Upload CSV</h2>
+    <p class="muted">Validated through the ingestion service (same path as the CLI loader).</p>
+    <form id="uploadForm" class="filters">
+      <div><label>Dataset type</label>
+        <select name="kind" id="kind">
+          <option value="projects">Projects</option>
+          <option value="activities">Activities</option>
+          <option value="progress">Progress updates</option>
+          <option value="costs">Cost records</option>
+        </select>
+      </div>
+      <div><label>CSV file</label><input type="file" name="file" id="file" accept=".csv"></div>
+      <button type="submit">Upload</button>
+    </form>
+    <div id="uploadResult" class="muted"></div>
+  </div>
+
+  <div class="card">
+    <h2>Recompute pipeline</h2>
+    <p class="muted">Re-run EVM analytics and risk scoring on the current data.</p>
+    <button id="recomputeBtn">Recompute EVM + Risk</button>
+    <div id="recomputeResult" class="muted" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:16px">
+  <h2>Retrain delay-risk model</h2>
+  <p class="muted">Trains RF/GB/SVM, selects best by ROC-AUC, saves the model, then recomputes risk scores.</p>
+  <button id="retrainBtn" class="ghost">Retrain model (background)</button>
+  <div id="retrainResult" class="muted" style="margin-top:8px"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const upForm = document.getElementById('uploadForm');
+upForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const kind = document.getElementById('kind').value;
+  const file = document.getElementById('file').files[0];
+  if (!file) { document.getElementById('uploadResult').textContent = 'Choose a file first.'; return; }
+  const fd = new FormData(); fd.append('file', file);
+  document.getElementById('uploadResult').textContent = 'Uploading...';
+  const r = await fetch('/api/upload/' + kind, { method:'POST', body: fd });
+  const j = await r.json();
+  document.getElementById('uploadResult').textContent = JSON.stringify(j);
+});
+
+document.getElementById('recomputeBtn').addEventListener('click', async () => {
+  const el = document.getElementById('recomputeResult');
+  el.textContent = 'Working...';
+  const r = await fetch('/api/recompute', { method:'POST' });
+  el.textContent = JSON.stringify(await r.json());
+});
+
+document.getElementById('retrainBtn').addEventListener('click', async () => {
+  const el = document.getElementById('retrainResult');
+  const fd = new FormData(); fd.append('data_path','datagen/out/risk_training.csv');
+  const r = await fetch('/api/retrain', { method:'POST', body: fd });
+  el.textContent = JSON.stringify(await r.json());
+  const poll = setInterval(async () => {
+    const s = await (await fetch('/api/status')).json();
+    if (!s.running) { clearInterval(poll); el.textContent = 'Done: ' + JSON.stringify(s.last); }
+  }, 2000);
+});
+</script>
+{% endblock %}

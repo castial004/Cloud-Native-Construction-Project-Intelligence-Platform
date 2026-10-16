@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ccpip-config
+  namespace: ccpip
+data:
+  INGESTION_API: http://ingestion:8000
+  DATA_DIR: /data
+  CCPIP_RISK_MODEL_PATH: /data/artifacts/risk_model.joblib
+  CCPIP_INGESTION_HOST: ingestion
+  CCPIP_INGESTION_PORT: "8000"

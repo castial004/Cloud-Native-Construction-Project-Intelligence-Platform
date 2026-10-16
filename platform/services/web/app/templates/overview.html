@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Overview{% endblock %}
+{% block content %}
+<h2>Executive Overview</h2>
+<div class="grid kpis">
+  <div class="card kpi"><div class="label">Total Budget</div><div class="value">{{ '{:,.0f}'.format(kpis.total_budget) }}</div></div>
+  <div class="card kpi"><div class="label">Earned Value</div><div class="value">{{ '{:,.0f}'.format(kpis.total_ev) }}</div></div>
+  <div class="card kpi"><div class="label">Actual Cost</div><div class="value">{{ '{:,.0f}'.format(kpis.total_ac) }}</div></div>
+  <div class="card kpi"><div class="label">CPI</div>
+    <div class="value {{ 'good' if kpis.cpi and kpis.cpi>=1 else 'bad' }}">{{ '%.3f'|format(kpis.cpi) if kpis.cpi else '—' }}</div></div>
+  <div class="card kpi"><div class="label">SPI</div>
+    <div class="value {{ 'good' if kpis.spi and kpis.spi>=1 else 'warn' }}">{{ '%.3f'|format(kpis.spi) if kpis.spi else '—' }}</div></div>
+  <div class="card kpi"><div class="label">High-Risk Activities</div>
+    <div class="value bad">{{ kpis.high_risk }}</div></div>
+</div>
+
+<div class="grid cards" style="margin-top:16px">
+  <div class="card">
+    <h2>Portfolio — CPI / SPI by project</h2>
+    <div class="chart-wrap"><canvas id="projChart"></canvas></div>
+  </div>
+  <div class="card">
+    <h2>Risk distribution</h2>
+    <div class="chart-wrap"><canvas id="riskChart"></canvas></div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:16px">
+  <h2>Projects</h2>
+  <table>
+    <thead><tr><th>Project</th><th>Activities</th><th>CPI</th><th>SPI</th><th>High Risk</th><th>Avg Delay Prob</th></tr></thead>
+    <tbody>
+      {% for p in projects %}
+      <tr>
+        <td>{{ p.project_id }} — {{ p.project_name }}</td>
+        <td>{{ p.activity_count }}</td>
+        <td class="{{ 'good' if p.cpi and p.cpi>=1 else 'bad' }}">{{ '%.3f'|format(p.cpi) if p.cpi else '—' }}</td>
+        <td class="{{ 'good' if p.spi and p.spi>=1 else 'warn' }}">{{ '%.3f'|format(p.spi) if p.spi else '—' }}</td>
+        <td class="bad">{{ p.high_risk_count or 0 }}</td>
+        <td>{{ '%.3f'|format(p.avg_delay_probability) if p.avg_delay_probability else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card" style="margin-top:16px">
+  <h2>Data store</h2>
+  <span class="muted">Projects {{ counts.projects }} · Activities {{ counts.activities }} · Progress {{ counts.progress }} · Costs {{ counts.costs }} · KPI rows {{ counts.kpis }} · Risk rows {{ counts.risks }}</span>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const projects = {{ projects|tojson }};
+new Chart(document.getElementById('projChart'), {
+  type:'bar',
+  data:{ labels: projects.map(p=>p.project_id),
+    datasets:[
+      { label:'CPI', data: projects.map(p=>p.cpi), backgroundColor:'#38bdf8' },
+      { label:'SPI', data: projects.map(p=>p.spi), backgroundColor:'#22c55e' }
+    ]},
+  options:{ responsive:true, maintainAspectRatio:false,
+    scales:{ y:{ beginAtZero:true, suggestedMax:1.3, ticks:{color:'#94a3b8'} }, x:{ ticks:{color:'#94a3b8'} } },
+    plugins:{ legend:{ labels:{color:'#e2e8f0'} } } }
+});
+new Chart(document.getElementById('riskChart'), {
+  type:'doughnut',
+  data:{ labels:['High','Medium','Low'],
+    datasets:[{ data:[{{ kpis.high_risk }}, {{ kpis.medium_risk }}, {{ kpis.low_risk }}],
+      backgroundColor:['#ef4444','#f59e0b','#22c55e'] }]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{color:'#e2e8f0'} } } }
+});
+</script>
+{% endblock %}

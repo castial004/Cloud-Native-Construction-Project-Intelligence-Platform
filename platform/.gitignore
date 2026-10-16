@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.pytest_cache/
+.mypy_cache/
+
+# Generated artifacts
+datagen/out/
+powerbi/exports/
+eval/output/
+eval/artifacts/
+
+# Build / artifacts
+*.log
+ccpip.egg-info/
+powerbi/*.pbix
+powerbi/*.pbit.bak
+
+# OS
+.DS_Store

@@ -1,0 +1,51 @@
+# One-shot pipeline: migrate -> ingest -> EVM -> train -> score -> verify.
+# Mirrors 'docker compose up pipeline'. Re-runnable; upserts on conflict.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ccpip-pipeline
+  namespace: ccpip
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        app: pipeline
+    spec:
+      restartPolicy: Never
+      initContainers:
+        - name: wait-for-db
+          image: postgres:16-alpine
+          command: ["sh", "-c", "until pg_isready -h db -U ccpip; do sleep 2; done"]
+      containers:
+        - name: pipeline
+          image: platform-pipeline:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-m", "services.pipeline", "--api", "$(INGESTION_API)", "--data", "$(DATA_DIR)"]
+          env:
+            - name: CCPIP_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ccpip-db
+                  key: CCPIP_DATABASE_URL
+          envFrom:
+            - configMapRef:
+                name: ccpip-config
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: ccpip-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ccpip-data
+  namespace: ccpip
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi

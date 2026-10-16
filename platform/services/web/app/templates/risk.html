@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Delay-Risk{% endblock %}
+{% block content %}
+<h2>Delay-Risk View</h2>
+<div class="grid cards">
+  <div class="card">
+    <h2>Delay-probability distribution (all activities)</h2>
+    <div class="chart-wrap"><canvas id="histChart"></canvas></div>
+  </div>
+  <div class="card">
+    <h2>Top {{ project }} risk activities</h2>
+    <table>
+      <thead><tr><th>Activity</th><th>Trade</th><th>Prob</th><th>Category</th><th>Top features</th></tr></thead>
+      <tbody>
+        {% for a in top %}
+        <tr>
+          <td>{{ a.activity_id }}<br><span class="muted">{{ a.activity_name }}</span></td>
+          <td>{{ a.trade_category }}</td>
+          <td>{{ '%.3f'|format(a.delay_probability) }}</td>
+          <td><span class="badge {{ a.risk_category }}">{{ a.risk_category }}</span></td>
+          <td class="muted">{{ a.top_features }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const hist = {{ hist|tojson }};
+new Chart(document.getElementById('histChart'), {
+  type:'bar',
+  data:{ labels: hist.map(h=>(h.bucket/10).toFixed(1)),
+    datasets:[{ label:'Activities', data: hist.map(h=>h.n), backgroundColor:'#f59e0b' }]},
+  options:{ responsive:true, maintainAspectRatio:false,
+    scales:{ y:{ ticks:{color:'#94a3b8'} }, x:{ ticks:{color:'#94a3b8'} } },
+    plugins:{ legend:{ labels:{color:'#e2e8f0'} } } }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,9 @@
+.venv
+__pycache__
+*.pyc
+.git
+datagen/out
+powerbi/exports
+eval/output
+eval/artifacts
+.pytest_cache

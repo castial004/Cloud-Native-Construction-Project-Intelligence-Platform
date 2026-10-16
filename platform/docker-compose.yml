@@ -1,0 +1,75 @@
+# Single build shared by all services (compose dedupes by image name).
+x-app: &app
+  build:
+    context: .
+  image: platform-app:latest
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ccpip}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ccpip}
+      POSTGRES_DB: ${POSTGRES_DB:-ccpip}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ccpip}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  ingestion:
+    <<: *app
+    command: uvicorn services.ingestion.app.main:app --host 0.0.0.0 --port 8000
+    environment:
+      CCPIP_DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-ccpip}:${POSTGRES_PASSWORD:-ccpip}@db:5432/${POSTGRES_DB:-ccpip}
+    ports:
+      - "${INGESTION_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  web:
+    <<: *app
+    command: uvicorn services.web.app.main:app --host 0.0.0.0 --port 8080
+    environment:
+      CCPIP_DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-ccpip}:${POSTGRES_PASSWORD:-ccpip}@db:5432/${POSTGRES_DB:-ccpip}
+      INGESTION_API: http://ingestion:8000
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      ingestion:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  pipeline:
+    <<: *app
+    command: python -m services.pipeline --api http://ingestion:8000 --data /data
+    restart: "no"
+    environment:
+      CCPIP_DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-ccpip}:${POSTGRES_PASSWORD:-ccpip}@db:5432/${POSTGRES_DB:-ccpip}
+      CCPIP_RISK_MODEL_PATH: /data/artifacts/risk_model.joblib
+    volumes:
+      - ./datagen/out:/data
+    depends_on:
+      db:
+        condition: service_healthy
+      ingestion:
+        condition: service_healthy
+
+volumes:
+  pgdata:

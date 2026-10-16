@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Cost{% endblock %}
+{% block content %}
+<h2>Cost Performance</h2>
+<form class="filters" method="get">
+  <div><label>Project</label>
+    <select name="project" onchange="this.form.submit()">
+      {% for p in projects %}<option value="{{p}}" {{ 'selected' if p==project }}>{{p}}</option>{% endfor %}
+    </select>
+  </div>
+</form>
+<div class="grid cards">
+  <div class="card">
+    <h2>Cumulative Actual Cost — {{ project }}</h2>
+    <div class="chart-wrap"><canvas id="costChart"></canvas></div>
+  </div>
+  <div class="card">
+    <h2>Top cost-overrun activities (lowest CV)</h2>
+    <table>
+      <thead><tr><th>Activity</th><th>Budget</th><th>EV</th><th>AC</th><th>CV</th><th>CPI</th></tr></thead>
+      <tbody>
+        {% for a in top_over %}
+        <tr>
+          <td>{{ a.activity_id }}<br><span class="muted">{{ a.activity_name }}</span></td>
+          <td>{{ '{:,.0f}'.format(a.budget) }}</td>
+          <td>{{ '{:,.0f}'.format(a.ev) }}</td>
+          <td>{{ '{:,.0f}'.format(a.ac) }}</td>
+          <td class="{{ 'good' if a.cv>=0 else 'bad' }}">{{ '{:,.0f}'.format(a.cv) }}</td>
+          <td class="{{ 'good' if a.cpi and a.cpi>=1 else 'bad' }}">{{ '%.3f'|format(a.cpi) if a.cpi else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const trend = {{ trend|tojson }};
+new Chart(document.getElementById('costChart'), {
+  type:'line',
+  data:{ labels: trend.map(t=>t.day),
+    datasets:[{ label:'Cumulative AC', data: trend.map(t=>t.ac_cum), borderColor:'#ef4444',
+      backgroundColor:'rgba(239,68,68,.15)', fill:true, tension:.2 }]},
+  options:{ responsive:true, maintainAspectRatio:false,
+    scales:{ y:{ ticks:{color:'#94a3b8'} }, x:{ ticks:{color:'#94a3b8'} } },
+    plugins:{ legend:{ labels:{color:'#e2e8f0'} } } }
+});
+</script>
+{% endblock %}

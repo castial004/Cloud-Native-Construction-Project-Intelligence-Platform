@@ -1,0 +1,72 @@
+// =============================================================================
+// CCPIP Power BI semantic measures (Data Analysis Expressions)
+// Data source: PostgreSQL curated views (see powerbi/CONNECT.md)
+// Tables: v_project_summary, v_activity_current, v_progress_trend, v_cost_trend
+// =============================================================================
+
+// ---- Executive overview -----------------------------------------------------
+Total Budget = SUM(v_project_summary[budget_at_completion])
+
+Total Earned Value = SUM(v_activity_current[ev])
+
+Total Actual Cost = SUM(v_activity_current[ac])
+
+Total Planned Value = SUM(v_activity_current[pv])
+
+// ---- EVM indices (portfolio level, recomputed from sums) --------------------
+CPI = DIVIDE([Total Earned Value], [Total Actual Cost])
+
+SPI = DIVIDE([Total Earned Value], [Total Planned Value])
+
+Cost Variance = [Total Earned Value] - [Total Actual Cost]
+
+Schedule Variance = [Total Earned Value] - [Total Planned Value]
+
+Estimate At Completion = DIVIDE([Total Budget], [CPI])
+
+// ---- Risk -------------------------------------------------------------------
+High Risk Activities = CALCULATE(COUNTROWS(v_activity_current),
+                        v_activity_current[risk_category] = "High")
+
+Average Delay Probability = AVERAGE(v_activity_current[delay_probability])
+
+// ---- Cumulative curves (paper Sec. VI DAX example) --------------------------
+Cumulative_Actual_Cost =
+CALCULATE(
+    SUM(v_cost_trend[actual_cost]),
+    FILTER(
+        ALLSELECTED(v_cost_trend),
+        v_cost_trend[timestamp] <= MAX(v_cost_trend[timestamp])
+    )
+)
+
+Cumulative_Earned_Value =
+CALCULATE(
+    SUM(v_progress_trend[earned_value]),
+    FILTER(
+        ALLSELECTED(v_progress_trend),
+        v_progress_trend[timestamp] <= MAX(v_progress_trend[timestamp])
+    )
+)
+
+Cumulative_Planned_Value =
+CALCULATE(
+    SUM(v_progress_trend[planned_value]),
+    FILTER(
+        ALLSELECTED(v_progress_trend),
+        v_progress_trend[timestamp] <= MAX(v_progress_trend[timestamp])
+    )
+)
+
+// ---- Status colour helpers --------------------------------------------------
+CPI Status =
+SWITCH(TRUE(),
+    [CPI] >= 1.0, "On/Under Budget",
+    [CPI] >= 0.95, "At Risk",
+    "Over Budget")
+
+SPI Status =
+SWITCH(TRUE(),
+    [SPI] >= 1.0, "On/Ahead of Schedule",
+    [SPI] >= 0.95, "At Risk",
+    "Behind Schedule")
