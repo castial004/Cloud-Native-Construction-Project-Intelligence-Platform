@@ -735,49 +735,25 @@ The resulting risk distribution assigned 57 activities to the High category and 
 
 \subsection{Dashboard Utility}
 
-The interactive dashboard surfaced portfolio-level KPIs (budget, earned value, actual cost, CPI, SPI, and high-risk count), per-project performance charts, a delay-risk distribution, and filterable activity tables. Figures~\ref{fig:overview} through~\ref{fig:data} present the six dashboard pages captured from the running system. The cost page renders a monotonic cumulative-actual-cost curve, and the schedule page renders a planned-versus-earned S-curve, both recomputed live from PostgreSQL rather than from cached spreadsheets. The activity explorer exposes delay probability and risk badge per activity, and the data-and-actions page permits upload, recomputation, and retraining without command-line access, directly addressing the usability barriers identified in prior survey work~\cite{ghosh2024use}.
+The interactive dashboard surfaced portfolio-level KPIs (budget, earned value, actual cost, CPI, SPI, and high-risk count), per-project performance charts, a delay-risk distribution, and filterable activity tables. Figure~\ref{fig:overview} presents the six dashboard pages captured from the running system. The cost page renders a monotonic cumulative-actual-cost curve, and the schedule page renders a planned-versus-earned S-curve, both recomputed live from PostgreSQL rather than from cached spreadsheets. The activity explorer exposes delay probability and risk badge per activity, and the data-and-actions page permits upload, recomputation, and retraining without command-line access, directly addressing the usability barriers identified in prior survey work~\cite{ghosh2024use}.
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=0.95\linewidth]{figures/fig_overview.png}
-\caption{Executive overview dashboard: portfolio KPIs, per-project CPI/SPI, and risk distribution.}
+\begin{minipage}[t]{0.325\textwidth}\centering
+  \includegraphics[width=\linewidth]{figures/fig_overview.png}\\[1pt]{\scriptsize (a) Overview}\end{minipage}\hfill
+\begin{minipage}[t]{0.325\textwidth}\centering
+  \includegraphics[width=\linewidth]{figures/fig_cost.png}\\[1pt]{\scriptsize (b) Cost}\end{minipage}\hfill
+\begin{minipage}[t]{0.325\textwidth}\centering
+  \includegraphics[width=\linewidth]{figures/fig_schedule.png}\\[1pt]{\scriptsize (c) Schedule}\end{minipage}\\[6pt]
+\begin{minipage}[t]{0.325\textwidth}\centering
+  \includegraphics[width=\linewidth]{figures/fig_risk.png}\\[1pt]{\scriptsize (d) Delay risk}\end{minipage}\hfill
+\begin{minipage}[t]{0.325\textwidth}\centering
+  \includegraphics[width=\linewidth]{figures/fig_activities.png}\\[1pt]{\scriptsize (e) Activities}\end{minipage}\hfill
+\begin{minipage}[t]{0.325\textwidth}\centering
+  \includegraphics[width=\linewidth]{figures/fig_data.png}\\[1pt]{\scriptsize (f) Data \& actions}\end{minipage}
+\caption{The six dashboard pages of the running platform: (a) executive overview with portfolio KPIs and risk distribution; (b) cumulative actual cost and cost-overrun activities; (c) planned-versus-earned S-curve with most-delayed activities; (d) delay-probability distribution and ranked high-risk activities; (e) filterable activity explorer; (f) data-and-actions console for validated upload, recomputation, and retraining.}
 \label{fig:overview}
-\end{figure}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.95\linewidth]{figures/fig_cost.png}
-\caption{Cost performance: cumulative actual cost and cost-overrun activities.}
-\label{fig:cost}
-\end{figure}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.95\linewidth]{figures/fig_schedule.png}
-\caption{Schedule performance: planned versus earned value S-curve and most-delayed activities.}
-\label{fig:schedule}
-\end{figure}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.95\linewidth]{figures/fig_risk.png}
-\caption{Delay-risk view: probability distribution and ranked high-risk activities.}
-\label{fig:risk}
-\end{figure}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.95\linewidth]{figures/fig_activities.png}
-\caption{Activity explorer with project, risk, trade, and criticality filters.}
-\label{fig:activities}
-\end{figure}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.95\linewidth]{figures/fig_data.png}
-\caption{Data-and-actions console: validated CSV upload, recomputation, and model retraining.}
-\label{fig:data}
-\end{figure}
+\end{figure*}
 
 \subsection{Operational Workflow Walkthrough}
 
@@ -845,6 +821,34 @@ Reproducibility is treated as a first-class property rather than an afterthought
 \subsection{Discussion}
 
 The results substantiate the central thesis: a single reproducible platform can unify ingestion, EVM analytics, predictive risk, and visualization. Three observations merit emphasis. First, the per-project status-date design was essential to meaningful EVM; without it, schedule indicators collapsed toward unity and lost discriminating power. Second, the calibration of the SVM materially improved the interpretability of the risk categories, because uncalibrated margins do not map cleanly onto probabilities. Third, the Kubernetes failover and autoscaling evidence demonstrates that the analytical sophistication of the delay-risk model is matched by operational robustness, closing the research-to-deployment gap that motivated the work.
+
+\subsection{Design Lessons Learned}
+
+Several design decisions proved consequential during implementation, and documenting them is useful for practitioners building similar platforms.
+
+\textbf{Status-date semantics are not an afterthought.} The single most impactful correction during development concerned the status date. An initial design evaluated each activity at its own final observation, which caused planned and earned values to saturate at the budget and forced the schedule index toward unity for every activity. Introducing a per-project status date---the midpoint of that project's reporting window---restored discriminating power and produced the meaningful distribution of indicators reported in Table~\ref{tab:projects}. Any platform that computes EVM must define its evaluation instant explicitly.
+
+\textbf{Idempotency enables iterative correction.} Because ingestion upserts and the analytical workers replace their outputs per activity, the entire pipeline can be re-run after a data correction without manual cleanup. This property converts what would otherwise be a fragile, one-shot process into a robust, repeatable one, and it is a direct consequence of the three-tier separation between facts and computed outputs.
+
+\textbf{Environment namespacing prevents silent failures.} Kubernetes injects service-discovery variables into every pod. An application setting that shares a name with an injected variable is silently overridden, producing startup failures that are difficult to diagnose. Prefixing all settings eliminated an entire class of deployment defects and is a lesson that generalizes to any containerized application deployed behind Kubernetes services.
+
+\textbf{Calibration matters for interpretability.} Uncalibrated classifier margins are ordinal at best; they rank activities but do not yield probabilities that can be thresholded into meaningful risk categories. Wrapping the support vector machine in a calibration step produced probabilities that map sensibly onto the Low, Medium, and High categories, making the risk output actionable rather than merely directional.
+
+\textbf{Reproducibility must be engineered, not assumed.} Reproducibility emerged not from a single technique but from the composition of a seeded generator, a versioned schema, a shared image, and a one-command launcher. Removing any one of these elements would break the reproducibility contract, which is why it is treated as an explicit design requirement (R9) rather than an incidental property.
+
+\subsection{Practical Implications}
+
+The platform has concrete implications for three groups of practitioners.
+
+\textbf{For project-control engineers,} the platform replaces a manual, spreadsheet-bound reporting cycle with an automated pipeline in which validated data flows directly into verified Earned Value indicators. The status-date convention ensures that indicators reflect a coherent reporting instant, and the validation gate ensures that corrupted records are caught at the boundary rather than silently propagating into reports.
+
+\textbf{For project managers,} the pairing of retrospective EVM with forward-looking delay-risk scores converts reporting from a post-mortem into an early-warning system. The activity explorer surfaces the specific activities that carry elevated delay probability, and the risk categories provide a triage mechanism that directs attention where intervention is most valuable. The dashboard's ability to display both aggregate project health and per-activity risk addresses the observation that healthy aggregate indicators can mask localized vulnerability.
+
+\textbf{For the research community,} the platform demonstrates that the analytical contributions of the literature---Earned Value formulations, probabilistic reliability methods, and machine-learning classification---can be composed into a single reproducible artifact rather than remaining isolated demonstrations. The explicit reproducibility contract provides a template that other construction-informatics studies could adopt, enabling results to be regenerated from an artifact alone.
+
+\textbf{For platform engineers,} the deployment topology illustrates how a data-intensive analytical application can be packaged for cloud-native operation with modest effort. The separation of a long-running web tier from one-shot analytical jobs, the use of health probes to gate traffic, and the namespacing of configuration to avoid collisions with injected service variables are generalizable patterns that apply well beyond construction informatics.
+
+The broader significance of these implications is that the barrier to deploying analytical project control is primarily architectural rather than algorithmic. The individual techniques are mature; what has been missing is their composition into a system that is trustworthy, reproducible, and operationally robust. This work suggests that closing that compositional gap is both feasible and valuable.
 
 % ============================================================================
 \section{Conclusion}
