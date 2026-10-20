@@ -14,6 +14,7 @@
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.17}
 \usepackage{url}
+\usepackage{flushend}   % balance the two columns on the final page
 \usepackage[hidelinks]{hyperref}
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
@@ -849,6 +850,64 @@ The platform has concrete implications for three groups of practitioners.
 \textbf{For platform engineers,} the deployment topology illustrates how a data-intensive analytical application can be packaged for cloud-native operation with modest effort. The separation of a long-running web tier from one-shot analytical jobs, the use of health probes to gate traffic, and the namespacing of configuration to avoid collisions with injected service variables are generalizable patterns that apply well beyond construction informatics.
 
 The broader significance of these implications is that the barrier to deploying analytical project control is primarily architectural rather than algorithmic. The individual techniques are mature; what has been missing is their composition into a system that is trustworthy, reproducible, and operationally robust. This work suggests that closing that compositional gap is both feasible and valuable.
+
+\subsection{Comparison with Prior Reported Results}
+
+Table~\ref{tab:benchmark} positions the platform's quantitative outcomes against values reported in the cited literature. Direct numerical comparison is necessarily approximate, because prior studies evaluate on different datasets and task definitions; nonetheless, the table situates the present results within the range of what the field reports. The delay-risk discrimination achieved here (ROC-AUC 0.976) is at the high end of the range typically reported for construction delay classifiers, which is expected given the controlled synthetic dataset and is appropriately qualified by the threats-to-validity discussion. The schedule-adherence figures are broadly consistent with the RealCONs findings, and the automated pipeline's zero-rejection ingestion corroborates the data-continuity benefits those authors attributed to structured capture. The deployment-recovery figure has no direct antecedent in the reviewed literature, because prior systems did not report container-level resilience; this is precisely the dimension that the cloud-native design adds.
+
+\begin{table}[t]
+\caption{Outcomes Relative to Representative Prior Reports}
+\label{tab:benchmark}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{@{}p{2.4cm}p{1.7cm}p{2.2cm}@{}}
+\toprule
+\textbf{Dimension} & \textbf{This Work} & \textbf{Prior Signal} \\
+\midrule
+Delay-risk AUC & 0.976 & High end of ML range~\cite{sanusi2024role} \\
+Schedule adherence & SPI 0.977 & SPI 1.01 vs 0.89~\cite{radman2026realcons} \\
+Data continuity & 0 rejects & 7$\times$ fewer gaps~\cite{radman2026realcons} \\
+Reporting latency & live recompute & 25\% reduction~\cite{gajera2023integrating} \\
+Deployment recovery & $\sim$1~s & not reported \\
+Visualization & web + BI & BI-centric~\cite{alsulaiti2021using} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Answers to the Research Questions}
+
+The evaluation was framed around four research questions in Section~I; we now answer each directly.
+
+\textbf{RQ1 (Integrity).} Yes. The ingestion service admitted 19,017 well-formed records with zero rejections while rejecting every fault-injected malformed payload with HTTP 422, demonstrating that a strict validation gate need not sacrifice throughput for correctness.
+
+\textbf{RQ2 (Analytical correctness).} Yes. All 189 computed KPI rows satisfy the defining Earned Value identities to numerical tolerance, and the per-project status-date convention yields genuinely discriminating indicators rather than the saturated values produced by a naive evaluation instant.
+
+\textbf{RQ3 (Predictive quality).} The candidate classifiers separate delayed from on-time activities strongly, with Gradient Boosting attaining the highest discrimination (ROC-AUC 0.976) and the calibrated SVM the best balance of precision and recall (F1 0.784). The choice of primary metric is consequential, and the platform reports the full set to support different operational preferences.
+
+\textbf{RQ4 (Deployment resilience).} Yes. Terminating an active ingestion pod triggered automatic rescheduling within approximately one second while persistent storage preserved database integrity, and horizontal autoscaling was confirmed active across the two-to-six replica range.
+
+Taken together, the answers indicate that the three conditions of the problem statement---enforced validation, verified indicators, and reproducible execution---hold simultaneously in a single deployable system.
+
+\subsection{Performance and Scalability Observations}
+
+Although the evaluation emphasized correctness and predictive quality, several operational characteristics are worth recording because they bear on practical deployment.
+
+\textbf{Ingestion throughput.} The batch-oriented ingestion interface admitted the full 19,017-record dataset in bounded batches without error, indicating that the validation gate is not a throughput bottleneck at this scale. Because validation is stateless and the service is horizontally replicated behind a load balancer, ingestion capacity scales linearly with replica count, which is precisely the workload that the Horizontal Pod Autoscaler is configured to absorb.
+
+\textbf{Analytical cost.} The analytics worker performs a single pass over each project's activities, fetching the status observation and computing the indicator set per activity. The cost is therefore linear in the number of activities and independent of the length of the observation history for a given status date, because only the status observation and the cumulative cost are required. This makes periodic recomputation inexpensive even as the fact tables grow.
+
+\textbf{Scoring cost.} Delay-risk scoring extracts a fixed-length feature vector per activity and evaluates the persisted model. Inference is therefore a single matrix multiplication over the activity population and completes in well under a second for the evaluated dataset, leaving ample headroom for larger portfolios.
+
+\textbf{Storage growth.} Because the fact tier is append-only, storage grows with the number of observations rather than being rewritten in place. This is the correct trade-off for an auditable project-control system, and it enables historical reconstruction that an in-place-update design would foreclose. Archival policies could bound long-term growth without compromising the audit trail.
+
+\subsection{Ethical and Practical Considerations}
+
+A platform that predicts which activities are likely to be delayed carries obligations beyond technical correctness. Predictions should inform human judgment rather than replace it: the delay-risk score is a probabilistic estimate under uncertainty, and treating it as a deterministic verdict risks misallocating attention or unfairly penalizing subcontractors whose historical delay rate contributed to the score. The platform mitigates this by surfacing the most influential features alongside each score, so that a planner can interrogate the basis of a prediction rather than accept it blindly.
+
+Data governance is a further consideration. Project-control records frequently contain commercially sensitive cost information and personally identifiable worker data. The deployment therefore isolates credentials in a secret store, avoids embedding sensitive configuration in images, and keeps the curated reporting views separate from the operational fact tables. Production deployments would additionally require role-based access control, data-retention policies, and audit logging of who accessed which project records, all of which are identified as future work.
+
+Finally, the synthetic dataset used in this evaluation is clearly labeled as such. Reporting results on synthetic data without qualification would be misleading; the paper states the dataset's provenance explicitly and frames the statistical results as an upper bound that requires recalibration on real portfolios.
 
 % ============================================================================
 \section{Conclusion}
