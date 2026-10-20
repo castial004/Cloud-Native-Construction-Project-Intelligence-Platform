@@ -98,11 +98,13 @@ Project Performance Tracker PowerBI Template.pbit
 
 ## Presentation
 
-**`project-final.pptx`** — the final-year project presentation (27 slides):
+**`project-final.pptx`** — the final-year project presentation (31 slides):
+a plain-language `Project at a Glance` and `Key Concepts` glossary, then
 motivation → problem → literature → gap → architecture → implementation →
-**live platform screenshots** → deployment → results → conclusion, reflecting
-the *implemented* and verified system. Includes the project team and a
-walkthrough of the working dashboard (see `docs/screenshots/`).
+a `Worked Example` of the EVM math → **live platform screenshots** →
+deployment → results → conclusion → limitations. Includes the project team,
+an honest limitations slide, and **detailed speaker notes on every slide**.
+Dashboard captures live in `docs/screenshots/`.
 
 It is **generated programmatically** from `build_deck.py`, so it can be
 regenerated after any change:

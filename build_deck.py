@@ -162,6 +162,42 @@ def footer(slide, n, label="CCPIP — Final-Year Project"):
     text(slide, 11.9, 7.02, 0.8, 0.3, f"{n:02d}", size=9, color=MUTED, align=PP_ALIGN.RIGHT)
 
 
+def reorder_slides(prs, order):
+    """Reorder slides in-place. 'order' is a list of original 0-based indices."""
+    sldIdLst = prs.slides._sldIdLst
+    ids = list(sldIdLst)
+    for el in ids:
+        sldIdLst.remove(el)
+    for i in order:
+        sldIdLst.append(ids[i])
+
+
+def renumber_footers(prs):
+    """Rewrite the page-number box on every slide to its final position."""
+    E = 914400
+    for idx, slide in enumerate(prs.slides, 1):
+        for sh in slide.shapes:
+            if not sh.has_text_frame:
+                continue
+            l = (sh.left or 0) / E
+            t = (sh.top or 0) / E
+            if t > 6.9 and l > 11.0 and sh.text_frame.text.strip().isdigit():
+                p = sh.text_frame.paragraphs[0]
+                for r in list(p.runs):
+                    r._r.getparent().remove(r._r)
+                run = p.add_run()
+                run.text = f"{idx:02d}"
+                run.font.name = FONT
+                run.font.size = Pt(9)
+                run.font.color.rgb = MUTED
+
+
+def add_notes(prs, notes_list):
+    """Attach speaker notes to each slide (in final order)."""
+    for slide, txt in zip(prs.slides, notes_list):
+        slide.notes_slide.notes_text_frame.text = txt
+
+
 def table(slide, rows, l, t, col_w, font=11, row_h=0.42, header_fill=ACCENT_DK,
           first_col_bold=False):
     nrows, ncols = len(rows), len(rows[0])
@@ -883,6 +919,238 @@ for i, r in enumerate(refs):
     run.font.size = Pt(12.5)
     run.font.color.rgb = TEXT
 footer(s, 27)
+
+# ============================================================== SLIDE A ===
+# "Project at a Glance" — a plain-language explainer placed right after Agenda.
+s = new_slide()
+header(s, "Overview", "Project at a Glance")
+text(s, 0.7, 1.95, 11.9, 0.6,
+     "In one sentence: we built a working web platform that watches a construction project's "
+     "cost and schedule in near real time, predicts which activities will run late, and shows it all on a dashboard.",
+     size=15, color=TEXT)
+
+glance = [
+    ("THE PROBLEM", "Project teams learn about cost overruns and delays too late — data lives in spreadsheets, and analytics is disconnected from the tools people actually use.", BAD),
+    ("WHAT WE BUILT", "A containerized system: a validated API ingests project data, a database stores it, analytics compute standard project-control metrics, a model predicts delay risk, and a web dashboard (plus Power BI) presents it.", ACCENT),
+    ("WHY IT MATTERS", "Managers get an early warning and a single, trustworthy view — instead of reconstructing reports by hand every cycle.", GOOD),
+]
+y = 2.75
+for title, body, col in glance:
+    box(s, 0.7, y, 11.95, 1.15, fill=PANEL, line=LINE, shape=MSO_SHAPE.ROUNDED_RECTANGLE, radius=0.06)
+    box(s, 0.7, y, 0.08, 1.15, fill=col, line=None)
+    text(s, 1.0, y + 0.14, 2.5, 0.35, title, size=12, color=col, bold=True, spacing=1)
+    text(s, 3.5, y + 0.14, 8.9, 0.9, body, size=12.5, color=TEXT, anchor=MSO_ANCHOR.MIDDLE)
+    y += 1.3
+
+text(s, 0.7, 6.55, 11.9, 0.4,
+     "Everything is reproducible: one command builds and runs the whole platform, on Linux, macOS, or Windows.",
+     size=11.5, color=ACCENT, italic=True)
+footer(s, 99)
+
+# ============================================================== SLIDE B ===
+# Key Concepts glossary — makes the jargon understandable to a general reader.
+s = new_slide()
+header(s, "Overview", "Key Concepts (Plain Language)")
+concepts = [
+    ("EVM", "Earned Value Management", "A standard way to measure project health by comparing planned work, work actually done, and money spent."),
+    ("PV", "Planned Value", "The budgeted cost of the work that should be done by a given date."),
+    ("EV", "Earned Value", "The budgeted cost of the work actually completed by that date."),
+    ("AC", "Actual Cost", "The real money spent so far."),
+    ("CPI", "Cost Performance Index", "EV / AC. Above 1 = under budget; below 1 = over budget."),
+    ("SPI", "Schedule Performance Index", "EV / PV. Above 1 = ahead of schedule; below 1 = behind."),
+    ("EAC", "Estimate At Completion", "A forecast of the final project cost based on current performance."),
+    ("Delay Risk", "Predictive score", "A model's probability (0–1) that an activity will finish later than planned."),
+]
+y = 1.95
+for i, (abbr, name, desc) in enumerate(concepts):
+    col = i % 2
+    row = i // 2
+    cx = 0.7 + col * 6.15
+    cy = 1.95 + row * 1.2
+    box(s, cx, cy, 5.85, 1.05, fill=PANEL, line=LINE, shape=MSO_SHAPE.ROUNDED_RECTANGLE, radius=0.08)
+    b = box(s, cx + 0.15, cy + 0.22, 0.9, 0.6, fill=PANEL2, line=ACCENT, shape=MSO_SHAPE.ROUNDED_RECTANGLE, radius=0.12)
+    fit_text(b, abbr, size=14, color=ACCENT, bold=True, align=PP_ALIGN.CENTER)
+    text(s, cx + 1.2, cy + 0.13, 4.5, 0.3, name, size=12, color=WHITE, bold=True)
+    text(s, cx + 1.2, cy + 0.45, 4.5, 0.55, desc, size=9.5, color=MUTED)
+footer(s, 99)
+
+# ============================================================== SLIDE C ===
+# Worked EVM example — shows the math with real numbers.
+s = new_slide()
+header(s, "06 — Implementation", "Worked Example: Reading the Metrics")
+text(s, 0.7, 1.9, 11.9, 0.4,
+     "Suppose one activity has a budget (BAC) of ₹100,000 and is planned to be 50% done today.",
+     size=14, color=TEXT)
+box(s, 0.7, 2.4, 5.85, 2.2, fill=PANEL2, line=LINE, shape=MSO_SHAPE.ROUNDED_RECTANGLE, radius=0.06)
+text(s, 0.95, 2.55, 5.3, 0.35, "THE INPUTS", size=11, color=ACCENT, bold=True, spacing=1)
+inputs = [
+    ("PV (planned value)", "₹50,000", "half the budget should be earned"),
+    ("EV (earned value)", "₹40,000", "only 40% actually completed"),
+    ("AC (actual cost)", "₹45,000", "we have spent ₹45k so far"),
+]
+iy = 2.95
+for name, val, note in inputs:
+    text(s, 0.95, iy, 3.0, 0.3, name, size=11.5, color=WHITE, bold=True)
+    text(s, 3.9, iy, 1.4, 0.3, val, size=11.5, color=ACCENT, bold=True, align=PP_ALIGN.RIGHT)
+    text(s, 0.95, iy + 0.28, 5.3, 0.3, note, size=9, color=MUTED)
+    iy += 0.55
+
+box(s, 6.85, 2.4, 5.8, 2.2, fill=PANEL2, line=LINE, shape=MSO_SHAPE.ROUNDED_RECTANGLE, radius=0.06)
+text(s, 7.1, 2.55, 5.3, 0.35, "THE INTERPRETATION", size=11, color=GOOD, bold=True, spacing=1)
+text(s, 7.1, 2.95, 5.3, 1.6,
+     "CPI = 40,000 / 45,000 = 0.89  →  over budget\n"
+     "SPI = 40,000 / 50,000 = 0.80  →  behind schedule\n"
+     "SV  = 40,000 − 50,000 = −10,000  →  ₹10k of work behind\n"
+     "EAC = 100,000 / 0.89 ≈ ₹112,000  →  forecast overrun",
+     size=11.5, color=TEXT)
+
+box(s, 0.7, 4.85, 11.95, 1.35, fill=PANEL, line=WARN, shape=MSO_SHAPE.ROUNDED_RECTANGLE, radius=0.08)
+text(s, 0.95, 5.0, 11.4, 0.35, "WHAT A MANAGER SEES", size=11, color=WARN, bold=True, spacing=1)
+text(s, 0.95, 5.35, 11.4, 0.75,
+     "Two red flags on one activity: cost is trending ~12% over, and work is ~20% behind. "
+     "The platform surfaces exactly this, per activity and rolled up per project.",
+     size=12, color=TEXT)
+text(s, 0.7, 6.4, 11.9, 0.4,
+     "This is the manual arithmetic the platform automates for every activity, every time data changes.",
+     size=11, color=MUTED, italic=True)
+footer(s, 99)
+
+# ============================================================== SLIDE D ===
+# Limitations — intellectual honesty for an academic evaluation.
+s = new_slide()
+header(s, "09 — Limitations", "Honest Boundaries of the Work")
+lims = [
+    ("Synthetic dataset", "The bundled data is generated, not real. It has realistic structure and a valid delay label, but real megaprojects may need model recalibration."),
+    ("Model, not causality", "The classifier predicts delay probability from features; it does not prove why an activity is late."),
+    ("EVM needs baselines", "Genuine EVM requires planned values and budgets. The original source CSVs lacked these — hence the generator."),
+    ("Single-node scope", "Kubernetes was validated on a local (minikube) cluster, not a production multi-node cloud."),
+    ("No authentication", "The web UI is open by design for demonstration; production needs role-based access control."),
+    ("Network dependency", "Live sync assumes connectivity; remote sites would need offline queuing."),
+]
+for i, (title, body) in enumerate(lims):
+    col = i % 2
+    row = i // 2
+    cx = 0.7 + col * 6.15
+    cy = 1.95 + row * 1.55
+    box(s, cx, cy, 5.85, 1.35, fill=PANEL, line=LINE, shape=MSO_SHAPE.ROUNDED_RECTANGLE, radius=0.08)
+    text(s, cx + 0.22, cy + 0.15, 5.4, 0.35, title, size=13, color=WARN, bold=True)
+    text(s, cx + 0.22, cy + 0.52, 5.4, 0.75, body, size=10, color=MUTED)
+footer(s, 99)
+
+# ------------------------------------------------------------------ reorder -
+# New slides were appended at the end; move them to their logical positions.
+# Current order (0-based): 0..26 = original 27, then 27=A,28=B,29=C,30=D
+# Target:
+#   0 Title, 1 Team, 2 Agenda, 27(Glance), 28(Concepts),
+#   3..12 (Motivation .. Data Model),
+#   13 Ingestion,14 EVM, 29(Worked example),15 ML,
+#   16..18 screenshots, 19 Data&Actions, 20 PowerBI, 21 Deploy,
+#   22 Results, 23 Validation, 24 Repro, 25 Conclusion,
+#   30(Limitations), 26 Future, ... wait - need Future & References at end
+# Original index map: 0 Title,1 Team,2 Agenda,3 Intro,4 Problem,5 Lit1,6 Lit2,
+#   7 Gap,8 Objectives,9 Stack,10 Arch,11 DataModel,12 Ingestion,13 EVM,14 ML,
+#   15 Shot1,16 Shot2,17 Shot3,18 Shot4,19 PowerBI,20 Deploy,21 Results,
+#   22 Validation,23 Repro,24 Conclusion,25 Future,26 References
+order = [
+    0,    # Title
+    1,    # Team
+    2,    # Agenda
+    27,   # A: Project at a Glance
+    28,   # B: Key Concepts
+    3,    # Motivation
+    4,    # Problem
+    5, 6, # Literature I, II
+    7,    # Research Gap
+    8,    # Objectives
+    9,    # Stack
+    10,   # Architecture
+    11,   # Data Model
+    12,   # Ingestion
+    13,   # EVM
+    29,   # C: Worked Example
+    14,   # ML
+    15, 16, 17, 18,  # screenshots
+    19,   # Power BI
+    20,   # Deploy
+    21,   # Results
+    22,   # Validation
+    23,   # Reproducibility
+    24,   # Conclusion
+    30,   # D: Limitations
+    25,   # Future Work
+    26,   # References
+]
+reorder_slides(prs, order)
+renumber_footers(prs)
+
+# ------------------------------------------------------------------ notes --
+NOTES = [
+    # 1 Title
+    "Title slide. Introduce the team and the one-line pitch: a working, cloud-native platform for construction project controls that predicts delay risk and visualizes cost/schedule health.",
+    # 2 Team
+    "Each member's area: Hasnain (data/platform), Sahil (analytics/ML), Aryan (architecture/visualization). Stress that it was delivered as one integrated system, not three separate pieces.",
+    # 3 Agenda
+    "Walk the audience through the flow: why (motivation) -> what's missing (gap) -> how we built it -> proof it works (live screenshots + results) -> conclusion.",
+    # 4 Project at a Glance
+    "Plain-language summary. If someone remembers nothing else, they should remember: 'it turns scattered project data into early warnings on a dashboard.'",
+    # 5 Key Concepts
+    "Define the jargon before using it. EVM, PV, EV, AC, CPI, SPI, EAC and delay-risk. Point out CPI and SPI rule of thumb: >1 good, <1 bad.",
+    # 6 Motivation
+    "Construction runs on the triple constraint. Despite P6/MS Project, overruns persist because data is fragmented and reported late. Industry 4.0 tools exist but are siloed.",
+    # 7 Problem
+    "Three deficiencies: fragmentation, retrospection (EVM is backward-looking), and analytics disconnected from deployment. The consequence is reacting too late.",
+    # 8 Lit I
+    "Prior visualization and lifecycle work is mature but descriptive and schedule-centric. Cite Chiu & Russell, Al-Sulaiti, Radman.",
+    # 9 Lit II
+    "Predictive and deployment techniques exist (Gajera, Zhang & Wang, RealCONs) but never combined. That isolation is the opening for our work.",
+    # 10 Gap
+    "No single reproducible system does all of: ingest, compute EVM, predict with ML, visualize, and deploy. We close all three gaps in one platform.",
+    # 11 Objectives
+    "Seven concrete objectives mapping to the system layers. Each is testable — see the validation slide later.",
+    # 12 Stack
+    "Explain why each tool: FastAPI for async validation, PostgreSQL for ACID + time series, scikit-learn for ML, Power BI for BI, Docker/K8s for reproducibility.",
+    # 13 Architecture
+    "Walk the data-flow arrows left to right. Emphasize separation of concerns: a dashboard outage never stops data capture.",
+    # 14 Data Model
+    "Three tiers: master entities, append-only time series, computed outputs. Curated views keep the BI model simple.",
+    # 15 Ingestion
+    "Show that validation is real: bad payloads get HTTP 422. In the verified run, 19,317 records were ingested with 0 rejected.",
+    # 16 EVM
+    "These six formulas are the backbone. The worker computes them as of a per-project status date.",
+    # 17 Worked Example
+    "Concrete numbers. CPI 0.89 = over budget, SPI 0.80 = behind, EAC forecasts an overrun. This is exactly what the platform automates.",
+    # 18 ML
+    "Delay label is defined by a finish-date threshold tau. Features are project-control signals. SVM won on ROC-AUC (0.969). Softmax/MPP adds a probabilistic reliability view.",
+    # 19 Screenshot 1
+    "This is the real dashboard, not a mockup. Point out CPI 0.982 and SPI 0.991 and the 57 high-risk activities.",
+    # 20 Screenshot 2
+    "Cost page shows cumulative actual cost; schedule page shows planned-vs-earned S-curve. Both recompute live from the database.",
+    # 21 Screenshot 3
+    "Risk page shows the probability distribution and the top-risk list with badges; the explorer lets you filter by project, risk, trade, criticality.",
+    # 22 Screenshot 4
+    "Data & Actions page: upload CSV, recompute EVM+Risk, retrain the model — all from the browser, no CLI.",
+    # 23 Power BI
+    "Power BI is the enterprise BI layer. It reads curated views, not raw tables, and reproduces the four decision tiers with DAX.",
+    # 24 Deploy
+    "Kubernetes gives health probes, autoscaling, and persistent storage. Self-healing was verified: a deleted pod returns in ~1 second.",
+    # 25 Results
+    "Table II: SVM best at ROC-AUC 0.969, F1 0.811. Explain why ROC-AUC/F1 matter more than raw accuracy on imbalanced delay data.",
+    # 26 Validation
+    "Six checks passed: EVM identities, E2E verification, self-healing, autoscaling, ingestion integrity, reproducibility.",
+    # 27 Reproducibility
+    "One command on Linux/macOS (./run.sh) or Windows (.\run.ps1). The six-stage flow runs automatically and prints the dashboard URL.",
+    # 28 Conclusion
+    "Six contributions. The headline: one reproducible platform that unifies the whole project-control pipeline.",
+    # 29 Limitations
+    "Be honest: synthetic data, correlational model, baseline dependency, single-node cluster, no auth, network dependency. Each has a path forward.",
+    # 30 Future Work
+    "Vision feeds, 4D BIM, real-world validation, graph features, access control, cost forecasting.",
+    # 31 References
+    "Full citations for the literature underpinning the design.",
+]
+if len(NOTES) != len(prs.slides):
+    print(f"WARNING: {len(NOTES)} notes vs {len(prs.slides)} slides")
+add_notes(prs, NOTES)
 
 # ------------------------------------------------------------------ save --
 out = "project-final.pptx"
