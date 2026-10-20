@@ -502,7 +502,7 @@ where \(E_j = S_j + D_j\) is the early finish of predecessor \(j\). Analytical g
 
 \subsection{Analytical Pipeline as an Algorithm}
 
-The end-to-end processing logic is summarized in the algorithm listing of Fig.~\ref{alg:pipeline}. The procedure is idempotent at every stage: master and fact records are upserted on their primary or uniqueness keys, KPI and risk rows are replaced per activity, and curated views are recreated deterministically. Idempotency is the property that makes re-running the pipeline after a data correction safe, a requirement that follows directly from R9.
+The end-to-end processing logic is summarized as pseudocode in Table~\ref{alg:pipeline}. The procedure is idempotent at every stage: master and fact records are upserted on their primary or uniqueness keys, KPI and risk rows are replaced per activity, and curated views are recreated deterministically. Idempotency is the property that makes re-running the pipeline after a data correction safe, a requirement that follows directly from R9.
 
 \begin{table}[t]
 \caption{End-to-End Project-Control Computation (Algorithm)}
