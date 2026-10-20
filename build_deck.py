@@ -795,7 +795,7 @@ box(s, 0.7, 1.95, 11.95, 1.5, fill=PANEL2, line=ACCENT, shape=MSO_SHAPE.ROUNDED_
 text(s, 1.0, 2.1, 5.6, 0.3, "LINUX / macOS", size=10.5, color=ACCENT, bold=True, spacing=1)
 text(s, 1.0, 2.42, 5.6, 0.4, "./run.sh", size=22, color=WHITE, bold=True, font="Consolas")
 text(s, 6.9, 2.1, 5.6, 0.3, "WINDOWS (POWERSHELL)", size=10.5, color=ACCENT, bold=True, spacing=1)
-text(s, 6.9, 2.42, 5.6, 0.4, ".\run.ps1", size=22, color=WHITE, bold=True, font="Consolas")
+text(s, 6.9, 2.42, 5.6, 0.4, r".\run.ps1", size=22, color=WHITE, bold=True, font="Consolas")
 text(s, 1.0, 2.95, 11.3, 0.4, "→ builds image · starts DB + API + UI · runs pipeline · prints http://localhost:8080",
      size=12, color=MUTED)
 
