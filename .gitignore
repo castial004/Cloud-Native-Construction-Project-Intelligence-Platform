@@ -16,6 +16,7 @@ platform/eval/artifacts/
 
 # OS / editors
 .DS_Store
+.~lock.*#
 .idea/
 .vscode/
 *.log
