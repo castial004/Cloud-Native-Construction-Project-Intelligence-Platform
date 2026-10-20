@@ -253,7 +253,7 @@ for name, roll in TEAM:
     text(s, tx, 4.72, 4.0, 0.35, name, size=15, color=WHITE, bold=True)
     text(s, tx, 5.06, 4.0, 0.3, roll, size=11, color=MUTED)
     tx += 4.05
-text(s, 0.9, 5.55, 11.6, 0.35, "Dept. of Computer Science & Engineering  ·  Bhilai Institute of Technology, Durg",
+text(s, 0.9, 5.55, 11.6, 0.35, "Dept. of Computer Science & Engineering  ·  Vellore Institute of Technology, Vellore",
      size=11, color=MUTED)
 
 techs = ["FastAPI", "PostgreSQL", "scikit-learn", "Power BI", "Docker", "Kubernetes"]
