@@ -291,12 +291,15 @@ for name, roll in TEAM:
     tx += 4.05
 text(s, 0.9, 5.55, 11.6, 0.35, "Dept. of Computer Science & Engineering  ·  Vellore Institute of Technology, Vellore",
      size=11, color=MUTED)
+text(s, 0.9, 5.88, 11.6, 0.32,
+     "Guide: Dr. Manikandan K  ·  Professor Grade 2, Department of Database Systems, SCSE",
+     size=11, color=WHITE, bold=True)
 
 techs = ["FastAPI", "PostgreSQL", "scikit-learn", "Power BI", "Docker", "Kubernetes"]
 x = 0.9
 for tch in techs:
     w = 0.28 + len(tch) * 0.105
-    b = box(s, x, 6.15, w, 0.4, fill=PANEL, line=LINE, shape=MSO_SHAPE.ROUNDED_RECTANGLE, radius=0.5)
+    b = box(s, x, 6.32, w, 0.4, fill=PANEL, line=LINE, shape=MSO_SHAPE.ROUNDED_RECTANGLE, radius=0.5)
     fit_text(b, tch, size=11, color=ACCENT, bold=True, align=PP_ALIGN.CENTER)
     x += w + 0.15
 
@@ -324,7 +327,7 @@ footer(s, 2)
 
 # =============================================================== SLIDE 3 ==
 s = new_slide()
-header(s, "Overview", "Agenda")
+header(s, "02 — Overview", "Agenda")
 agenda = [
     ("01", "Introduction & Motivation", "Why construction control needs a deployable platform"),
     ("02", "Problem Definition", "Fragmentation, retrospection, and the analytics–deployment gap"),
@@ -601,7 +604,7 @@ text(s, 0.95, 5.98, 5.4, 0.6, 'percent_complete = 150  ·  naive timestamp  ·  
      size=11.5, color=TEXT)
 box(s, 6.85, 5.5, 5.8, 1.2, fill=PANEL2, line=GOOD, shape=MSO_SHAPE.ROUNDED_RECTANGLE, radius=0.08)
 text(s, 7.1, 5.62, 5.4, 0.35, "ACCEPTED & STORED", size=10.5, color=GOOD, bold=True, spacing=1)
-text(s, 7.1, 5.98, 5.4, 0.6, "19,317 records ingested — 0 rejected in the verified run",
+text(s, 7.1, 5.98, 5.4, 0.6, "13,980 records ingested — 0 rejected in the verified run",
      size=11.5, color=TEXT)
 footer(s, 13)
 
@@ -658,9 +661,9 @@ text(s, 7.1, 3.0, 5.3, 0.8,
 text(s, 0.7, 4.2, 11.9, 0.35, "MODEL SELECTION", size=11, color=ACCENT, bold=True, spacing=1)
 table(s, [
     ["Model", "Acc.", "Prec.", "Rec.", "F1", "ROC-AUC"],
-    ["Random Forest", "0.880", "0.704", "0.805", "0.746", "0.955"],
-    ["Gradient Boosting", "0.903", "0.820", "0.713", "0.762", "0.943"],
-    ["SVM (selected)", "0.920", "0.849", "0.791", "0.811", "0.969"],
+    ["Random Forest", "0.900", "0.700", "0.856", "0.763", "0.960"],
+    ["Gradient Boosting (selected)", "0.913", "0.789", "0.730", "0.748", "0.976"],
+    ["Calibrated SVM", "0.920", "0.799", "0.785", "0.784", "0.949"],
 ], 0.7, 4.6, col_w=[2.4, 1.1, 1.1, 1.1, 1.1, 1.35], font=11, row_h=0.44, first_col_bold=True)
 text(s, 8.9, 4.75, 3.8, 1.3,
      "Each activity gets a delay probability → Low / Medium / High category, "
@@ -787,18 +790,18 @@ header(s, "08 — Results", "Model Benchmark")
 text(s, 0.7, 1.9, 6, 0.35, "TABLE II — DELAY-RISK CLASSIFIERS (5-FOLD CV)", size=11, color=ACCENT, bold=True, spacing=1)
 table(s, [
     ["Model", "Acc.", "Prec.", "Rec.", "F1", "ROC-AUC"],
-    ["Random Forest", "0.880", "0.704", "0.805", "0.746", "0.955"],
-    ["Gradient Boosting", "0.903", "0.820", "0.713", "0.762", "0.943"],
-    ["SVM (selected)", "0.920", "0.849", "0.791", "0.811", "0.969"],
+    ["Random Forest", "0.900", "0.700", "0.856", "0.763", "0.960"],
+    ["Gradient Boosting (selected)", "0.913", "0.789", "0.730", "0.748", "0.976"],
+    ["Calibrated SVM", "0.920", "0.799", "0.785", "0.784", "0.949"],
 ], 0.7, 2.35, col_w=[2.3, 1.05, 1.05, 1.05, 1.05, 1.3], font=12, row_h=0.52, first_col_bold=True)
-text(s, 0.7, 4.75, 6.5, 0.35, "SVM selected by highest ROC-AUC (0.969).", size=12, color=GOOD, italic=True)
+text(s, 0.7, 4.75, 6.5, 0.35, "Gradient Boosting selected by highest ROC-AUC (0.976).", size=12, color=GOOD, italic=True)
 
 box(s, 7.0, 1.9, 5.6, 4.6, fill=PANEL2, line=LINE, shape=MSO_SHAPE.ROUNDED_RECTANGLE, radius=0.05)
 text(s, 7.25, 2.1, 5.1, 0.35, "WHY IT MATTERS", size=12, color=ACCENT, bold=True, spacing=1)
 bullets(s, [
     "Accuracy alone is misleading on imbalanced delay data.",
-    "ROC-AUC 0.969 means strong separation of delayed vs. on-time activities.",
-    "F1 0.811 balances precision and recall for actionable alerts.",
+    "ROC-AUC 0.976 means strong separation of delayed vs. on-time activities.",
+    "F1 0.784 balances precision and recall for actionable alerts.",
     "Calibrated SVM probabilities feed the risk categories directly.",
 ], 7.25, 2.6, 5.1, 3.6, size=12.5)
 footer(s, 22)
@@ -811,7 +814,7 @@ checks = [
     ("End-to-end verification", "Automated E2E check passes: row counts, identities, risk bounds, non-empty views", GOOD),
     ("Self-healing", "A deleted ingestion pod is rescheduled by Kubernetes in ~1 second", GOOD),
     ("Autoscaling", "HPA scales the ingestion tier between 2 and 6 replicas on CPU", WARN),
-    ("Ingestion integrity", "19,317 records ingested, 0 rejected; malformed payloads return HTTP 422", ACCENT),
+    ("Ingestion integrity", "13,980 records ingested, 0 rejected; malformed payloads return HTTP 422", ACCENT),
     ("Reproducibility", "One-command launch; seeded synthetic dataset; identical results every run", GOOD),
 ]
 for i, (title, body, col) in enumerate(checks):
@@ -865,7 +868,7 @@ header(s, "09 — Conclusion", "Contributions")
 bullets(s, [
     "One reproducible, cloud-native platform unifying ingestion, storage, EVM analytics, ML risk, and visualization.",
     "Genuine EVM and a valid delay-risk classifier — enabled by an activity-level dataset with real baselines.",
-    "Calibrated SVM achieving 0.969 ROC-AUC on delay prediction.",
+    "Gradient Boosting achieving 0.976 ROC-AUC on delay prediction.",
     "Self-healing Kubernetes deployment with autoscaling and validated failover.",
     "An interactive web UI plus a Power BI decision layer over curated views.",
     "Open, one-command launch across Linux, macOS, and Windows.",
@@ -923,7 +926,7 @@ footer(s, 27)
 # ============================================================== SLIDE A ===
 # "Project at a Glance" — a plain-language explainer placed right after Agenda.
 s = new_slide()
-header(s, "Overview", "Project at a Glance")
+header(s, "02 — Overview", "Project at a Glance")
 text(s, 0.7, 1.95, 11.9, 0.6,
      "In one sentence: we built a working web platform that watches a construction project's "
      "cost and schedule in near real time, predicts which activities will run late, and shows it all on a dashboard.",
@@ -950,7 +953,7 @@ footer(s, 99)
 # ============================================================== SLIDE B ===
 # Key Concepts glossary — makes the jargon understandable to a general reader.
 s = new_slide()
-header(s, "Overview", "Key Concepts (Plain Language)")
+header(s, "02 — Overview", "Key Concepts (Plain Language)")
 concepts = [
     ("EVM", "Earned Value Management", "A standard way to measure project health by comparing planned work, work actually done, and money spent."),
     ("PV", "Planned Value", "The budgeted cost of the work that should be done by a given date."),
@@ -1114,13 +1117,13 @@ NOTES = [
     # 14 Data Model
     "Three tiers: master entities, append-only time series, computed outputs. Curated views keep the BI model simple.",
     # 15 Ingestion
-    "Show that validation is real: bad payloads get HTTP 422. In the verified run, 19,317 records were ingested with 0 rejected.",
+    "Show that validation is real: bad payloads get HTTP 422. In the verified run, 13,980 records were ingested with 0 rejected.",
     # 16 EVM
     "These six formulas are the backbone. The worker computes them as of a per-project status date.",
     # 17 Worked Example
     "Concrete numbers. CPI 0.89 = over budget, SPI 0.80 = behind, EAC forecasts an overrun. This is exactly what the platform automates.",
     # 18 ML
-    "Delay label is defined by a finish-date threshold tau. Features are project-control signals. SVM won on ROC-AUC (0.969). Softmax/MPP adds a probabilistic reliability view.",
+    "Delay label is defined by a finish-date threshold tau. Features are project-control signals. Gradient Boosting won on ROC-AUC (0.976). Softmax/MPP adds a probabilistic reliability view.",
     # 19 Screenshot 1
     "This is the real dashboard, not a mockup. Point out CPI 0.982 and SPI 0.991 and the 57 high-risk activities.",
     # 20 Screenshot 2
@@ -1134,7 +1137,7 @@ NOTES = [
     # 24 Deploy
     "Kubernetes gives health probes, autoscaling, and persistent storage. Self-healing was verified: a deleted pod returns in ~1 second.",
     # 25 Results
-    "Table II: SVM best at ROC-AUC 0.969, F1 0.811. Explain why ROC-AUC/F1 matter more than raw accuracy on imbalanced delay data.",
+    "Table II: Gradient Boosting best at ROC-AUC 0.976; calibrated SVM best F1 0.784. Explain why ROC-AUC/F1 matter more than raw accuracy on imbalanced delay data.",
     # 26 Validation
     "Six checks passed: EVM identities, E2E verification, self-healing, autoscaling, ingestion integrity, reproducibility.",
     # 27 Reproducibility
