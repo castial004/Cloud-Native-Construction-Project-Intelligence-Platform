@@ -1,0 +1,7 @@
+project_id,name,contractor,budget_at_completion,planned_start,planned_finish
+PRJ-001,Project 1,AlphaBuild,7390339.5431,2023-01-02,2023-10-10
+PRJ-002,Project 2,AlphaBuild,6935567.1425,2023-01-23,2024-01-07
+PRJ-003,Project 3,EpsilonEng,5906619.0895,2023-02-13,2024-01-25
+PRJ-004,Project 4,GammaWorks,6838199.1161,2023-03-06,2023-12-25
+PRJ-005,Project 5,GammaWorks,6149718.3084,2023-03-27,2024-02-12
+PRJ-006,Project 6,GammaWorks,7051578.35,2023-04-17,2024-02-25

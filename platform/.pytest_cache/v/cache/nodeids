@@ -1,0 +1,21 @@
+[
+  "tests/test_evm.py::test_on_schedule_on_budget",
+  "tests/test_evm.py::test_overrun_and_delay",
+  "tests/test_evm.py::test_standard_case",
+  "tests/test_evm.py::test_zero_ac_gives_none_cpi",
+  "tests/test_evm.py::test_zero_pv_gives_none_spi",
+  "tests/test_ingestion.py::test_extra_field_rejected",
+  "tests/test_ingestion.py::test_health",
+  "tests/test_ingestion.py::test_progress_rejects_naive_timestamp",
+  "tests/test_ingestion.py::test_progress_rejects_out_of_range_percent",
+  "tests/test_ingestion.py::test_project_rejects_finish_before_start",
+  "tests/test_ingestion.py::test_project_rejects_negative_budget",
+  "tests/test_risk.py::test_most_probable_failure_point_chain",
+  "tests/test_risk.py::test_softmax_early_finish_dominated_by_longest",
+  "tests/test_risk.py::test_softmax_early_finish_no_predecessors",
+  "tests/test_risk.py::test_softmax_peaks_on_max",
+  "tests/test_risk.py::test_softmax_sums_to_one",
+  "tests/test_smoke.py::test_generator_label_has_both_classes",
+  "tests/test_smoke.py::test_generator_reproducible",
+  "tests/test_smoke.py::test_settings_prefix"
+]
